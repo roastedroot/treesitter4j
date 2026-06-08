@@ -1,0 +1,20 @@
+[package]
+name = "tree-sitter-wasm"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "tree_sitter_wasm"
+crate-type = ["cdylib"]
+
+[dependencies]
+tree-sitter = "0.24"
+tree-sitter-json = "0.23"
+tree-sitter-java = "0.23"
+
+[profile.release]
+opt-level = 'z'
+lto = true
+codegen-units = 1
+strip = true
+panic = "abort"
