@@ -59,8 +59,8 @@ fn get_language(lang_id: i32) -> Option<Language> {
         LANG_JAVA => Some(tree_sitter_java::LANGUAGE.into()),
         LANG_PROPERTIES => Some(tree_sitter_properties::LANGUAGE.into()),
         LANG_HTML => Some(tree_sitter_html::LANGUAGE.into()),
-        LANG_XML => Some(tree_sitter_xml::LANGUAGE.into()),
-        LANG_MARKDOWN => Some(tree_sitter_markdown::LANGUAGE.into()),
+        LANG_XML => Some(tree_sitter_xml::LANGUAGE_XML.into()),
+        //LANG_MARKDOWN => Some(tree_sitter_markdown::language()),
         LANG_YAML => Some(tree_sitter_yaml::LANGUAGE.into()),
         _ => None,
     }
