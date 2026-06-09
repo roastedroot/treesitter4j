@@ -19,10 +19,20 @@ class TreeSitterPropertiesTest {
 
             try (var tree = parser.parseString(properties)) {
                 TreeSitterNode rootNode = tree.rootNode();
-                String sexp = rootNode.toSexp();
-                assertNotNull(sexp);
+                assertEquals("file",rootNode.type());
 
-                System.out.println("Syntax tree: " + sexp);
+                var propertyNode = rootNode.child(0);
+                assertEquals("property",propertyNode.type());
+                assertEquals(3,propertyNode.childCount());
+
+                var key = propertyNode.child(0);
+                assertEquals("key",key.type());
+
+                var separator = propertyNode.child(1);
+                assertEquals("=",separator.type());
+
+                var value = propertyNode.child(2);
+                assertEquals("value",value.type());
             }
         }
     }
