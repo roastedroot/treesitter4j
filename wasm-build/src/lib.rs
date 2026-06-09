@@ -1,6 +1,7 @@
 use std::mem;
 use std::slice;
-use tree_sitter::{Language, Node, Parser, Tree};
+use streaming_iterator::StreamingIterator;
+use tree_sitter::{Language, Node, Parser, Tree, Query, QueryCursor};
 
 // --- Global state (wasm is single-threaded) ---
 
@@ -171,7 +172,7 @@ fn get_node(handle: i32) -> Option<&'static Node<'static>> {
     unsafe { NODES.get(handle as usize).and_then(|opt| opt.as_ref()) }
 }
 
-/// Get the type of a node. Result available via get_result_ptr/get_result_len.
+/// Get the node's type. Result available via get_result_ptr/get_result_len.
 #[no_mangle]
 pub extern "C" fn node_type(node_handle: i32) -> i32 {
     match get_node(node_handle) {
@@ -260,5 +261,203 @@ pub extern "C" fn node_is_named(node_handle: i32) -> i32 {
     match get_node(node_handle) {
         Some(node) => if node.is_named() { 1 } else { 0 },
         None => -1,
+    }
+}
+
+// --- Query API ---
+
+static mut QUERIES: Vec<Option<Query>> = Vec::new();
+
+struct QueryCursorState {
+    cursor: QueryCursor,
+    captures: Vec<(i32, u32)>, // (node_handle, capture_name_index)
+}
+
+static mut QUERY_CURSORS: Vec<Option<QueryCursorState>> = Vec::new();
+
+/// Create a new query for the given language. Returns query handle, or -1 on error.
+#[no_mangle]
+pub extern "C" fn query_new(lang_id: i32, source_ptr: i32, source_len: i32) -> i32 {
+    let lang = match get_language(lang_id) {
+        Some(l) => l,
+        None => return -1,
+    };
+    let source = unsafe { slice::from_raw_parts(source_ptr as *const u8, source_len as usize) };
+    let source_str = match std::str::from_utf8(source) {
+        Ok(s) => s,
+        Err(_) => return -1,
+    };
+    match Query::new(&lang, source_str) {
+        Ok(query) => unsafe {
+            let handle = QUERIES.len() as i32;
+            QUERIES.push(Some(query));
+            handle
+        },
+        Err(_) => -1,
+    }
+}
+
+/// Delete a query.
+#[no_mangle]
+pub extern "C" fn query_delete(handle: i32) {
+    unsafe {
+        if let Some(slot) = QUERIES.get_mut(handle as usize) {
+            *slot = None;
+        }
+    }
+}
+
+/// Get the number of patterns in a query.
+#[no_mangle]
+pub extern "C" fn query_pattern_count(handle: i32) -> i32 {
+    unsafe {
+        match QUERIES.get(handle as usize) {
+            Some(Some(q)) => q.pattern_count() as i32,
+            _ => -1,
+        }
+    }
+}
+
+/// Get the number of capture names in a query.
+#[no_mangle]
+pub extern "C" fn query_capture_count(handle: i32) -> i32 {
+    unsafe {
+        match QUERIES.get(handle as usize) {
+            Some(Some(q)) => q.capture_names().len() as i32,
+            _ => -1,
+        }
+    }
+}
+
+/// Get the name of a capture by index. Result available via get_result_ptr/get_result_len.
+#[no_mangle]
+pub extern "C" fn query_capture_name(query_handle: i32, name_index: i32) -> i32 {
+    unsafe {
+        match QUERIES.get(query_handle as usize) {
+            Some(Some(q)) => {
+                match q.capture_names().get(name_index as usize) {
+                    Some(name) => {
+                        set_result(name.as_bytes());
+                        0
+                    }
+                    None => -1,
+                }
+            }
+            _ => -1,
+        }
+    }
+}
+
+/// Create a new query cursor. Returns cursor handle.
+#[no_mangle]
+pub extern "C" fn query_cursor_new() -> i32 {
+    unsafe {
+        let handle = QUERY_CURSORS.len() as i32;
+        QUERY_CURSORS.push(Some(QueryCursorState {
+            cursor: QueryCursor::new(),
+            captures: Vec::new(),
+        }));
+        handle
+    }
+}
+
+/// Delete a query cursor.
+#[no_mangle]
+pub extern "C" fn query_cursor_delete(handle: i32) {
+    unsafe {
+        if let Some(slot) = QUERY_CURSORS.get_mut(handle as usize) {
+            *slot = None;
+        }
+    }
+}
+
+/// Execute a query cursor against a node. Collects all captures.
+/// Returns the number of captures, or -1 on error.
+#[no_mangle]
+pub extern "C" fn query_cursor_exec(
+    cursor_handle: i32,
+    query_handle: i32,
+    node_handle: i32,
+    source_ptr: i32,
+    source_len: i32,
+) -> i32 {
+    unsafe {
+        // Take cursor state out to avoid borrow conflicts
+        let mut state = match QUERY_CURSORS.get_mut(cursor_handle as usize) {
+            Some(slot) => match slot.take() {
+                Some(s) => s,
+                None => return -1,
+            },
+            None => return -1,
+        };
+
+        let query = match QUERIES.get(query_handle as usize) {
+            Some(Some(q)) => q as *const Query,
+            _ => {
+                QUERY_CURSORS[cursor_handle as usize] = Some(state);
+                return -1;
+            }
+        };
+
+        let node = match get_node(node_handle) {
+            Some(n) => *n,
+            None => {
+                QUERY_CURSORS[cursor_handle as usize] = Some(state);
+                return -1;
+            }
+        };
+
+        let source = slice::from_raw_parts(source_ptr as *const u8, source_len as usize);
+
+        // Collect all captures from all matches
+        let mut local_captures = Vec::new();
+        let mut matches = state.cursor.matches(&*query, node, source);
+        while let Some(m) = matches.next() {
+            for capture in m.captures {
+                let nh = store_node(capture.node);
+                local_captures.push((nh, capture.index));
+            }
+        }
+        drop(matches);
+        state.captures = local_captures;
+
+        let count = state.captures.len() as i32;
+
+        // Put cursor state back
+        QUERY_CURSORS[cursor_handle as usize] = Some(state);
+
+        count
+    }
+}
+
+/// Get the node handle for a capture at the given index.
+#[no_mangle]
+pub extern "C" fn query_cursor_capture_node(cursor_handle: i32, index: i32) -> i32 {
+    unsafe {
+        match QUERY_CURSORS.get(cursor_handle as usize) {
+            Some(Some(state)) => {
+                match state.captures.get(index as usize) {
+                    Some((node_handle, _)) => *node_handle,
+                    None => -1,
+                }
+            }
+            _ => -1,
+        }
+    }
+}
+
+/// Get the capture name index for a capture at the given index.
+#[no_mangle]
+pub extern "C" fn query_cursor_capture_name_id(cursor_handle: i32, index: i32) -> i32 {
+    unsafe {
+        match QUERY_CURSORS.get(cursor_handle as usize) {
+            Some(Some(state)) => {
+                match state.captures.get(index as usize) {
+                    Some((_, name_id)) => *name_id as i32,
+                    None => -1,
+                }
+            }
+            _ => -1,
+        }
     }
 }

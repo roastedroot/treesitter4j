@@ -3,6 +3,9 @@ WASI_SDK_VERSION := 33
 BINARYEN_VERSION := 130
 PWD := $(CURDIR)
 
+# Ensure cargo (installed via rustup) is on PATH
+export PATH := $(HOME)/.cargo/bin:$(PATH)
+
 DETECTED_OS := $(shell uname -s | tr '[:upper:]' '[:lower:]')
 DETECTED_ARCH := $(shell uname -m)
 
@@ -91,6 +94,24 @@ get-binaryen: info
 	fi
 
 
+.PHONY: get-rust
+get-rust:
+	@if ! command -v cargo >/dev/null 2>&1; then \
+	   echo "Rust/Cargo not found. Installing via rustup..."; \
+	   curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y && \
+	   . "$(HOME)/.cargo/env" && \
+	   echo "✅ Rust successfully installed!"; \
+	else \
+	   echo "✅ Rust/Cargo already installed: $$(cargo --version)"; \
+	fi
+	@if ! rustup target list --installed | grep -q wasm32-wasip1; then \
+	   echo "Adding wasm32-wasip1 target..."; \
+	   rustup target add wasm32-wasip1 && \
+	   echo "✅ wasm32-wasip1 target added!"; \
+	else \
+	   echo "✅ wasm32-wasip1 target already installed"; \
+	fi
+
 .PHONY: build
 build:
 	WASI_SDK_PATH=$(PWD)/wasi-sdk \
@@ -118,4 +139,4 @@ release:
 local: build optimize release
 
 .PHONY: all
-all: get-wasisdk get-binaryen local
+all: get-rust get-wasisdk get-binaryen local

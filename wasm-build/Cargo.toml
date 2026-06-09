@@ -9,6 +9,7 @@ crate-type = ["cdylib"]
 
 [dependencies]
 tree-sitter = "0.24"
+streaming-iterator = "0.1"
 tree-sitter-json = "0.23"
 tree-sitter-java = "0.23"
 tree-sitter-properties = "0.3.0"

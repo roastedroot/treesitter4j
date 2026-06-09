@@ -6,6 +6,8 @@ import com.dylibso.chicory.wasi.WasiOptions;
 import com.dylibso.chicory.wasi.WasiPreview1;
 
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
 
 public final class TreeSitter implements AutoCloseable {
 
@@ -45,6 +47,74 @@ public final class TreeSitter implements AutoCloseable {
         int rc = exports.parserSetLanguage(parserHandle, language.id());
         if (rc < 0) {
             throw new TreeSitterException("Failed to set language: " + language);
+        }
+    }
+
+    public TreeSitterQuery newQuery(Language language, String pattern) {
+        byte[] patternBytes = pattern.getBytes(StandardCharsets.UTF_8);
+        int ptr = exports.alloc(patternBytes.length);
+        try {
+            exports.memory().write(ptr, patternBytes);
+            int handle = exports.queryNew(language.id(), ptr, patternBytes.length);
+            if (handle < 0) {
+                throw new TreeSitterException("Failed to create query for language: " + language);
+            }
+            return new TreeSitterQuery(handle, this);
+        } finally {
+            exports.dealloc(ptr, patternBytes.length);
+        }
+    }
+
+    void deleteQuery(int handle) {
+        exports.queryDelete(handle);
+    }
+
+    int queryPatternCount(int handle) {
+        return exports.queryPatternCount(handle);
+    }
+
+    int queryCaptureCount(int handle) {
+        return exports.queryCaptureCount(handle);
+    }
+
+    String queryCaptureName(int queryHandle, int nameIndex) {
+        int rc = exports.queryCaptureName(queryHandle, nameIndex);
+        if (rc < 0) {
+            throw new TreeSitterException("Failed to get capture name at index: " + nameIndex);
+        }
+        return readResult();
+    }
+
+    List<TreeSitterQueryResult> queryExec(int queryHandle, int nodeHandle, String source) {
+        byte[] sourceBytes = source.getBytes(StandardCharsets.UTF_8);
+        int sourcePtr = exports.alloc(sourceBytes.length);
+        try {
+            exports.memory().write(sourcePtr, sourceBytes);
+            int cursorHandle = exports.queryCursorNew();
+            try {
+                int captureCount = exports.queryCursorExec(
+                        cursorHandle, queryHandle, nodeHandle, sourcePtr, sourceBytes.length);
+                if (captureCount < 0) {
+                    throw new TreeSitterException("Failed to execute query");
+                }
+                List<TreeSitterQueryResult> captures = new ArrayList<>(captureCount);
+                for (int i = 0; i < captureCount; i++) {
+                    int captureNodeHandle = exports.queryCursorCaptureNode(cursorHandle, i);
+                    int captureNameId = exports.queryCursorCaptureNameId(cursorHandle, i);
+
+                    TreeSitterNode captureNode = new TreeSitterNode(captureNodeHandle, this);
+
+                    int rc = exports.queryCaptureName(queryHandle, captureNameId);
+                    String captureName = (rc == 0) ? readResult() : "unknown";
+
+                    captures.add(new TreeSitterQueryResult(captureName, captureNode));
+                }
+                return captures;
+            } finally {
+                exports.queryCursorDelete(cursorHandle);
+            }
+        } finally {
+            exports.dealloc(sourcePtr, sourceBytes.length);
         }
     }
 
