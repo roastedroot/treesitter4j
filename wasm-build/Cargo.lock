@@ -147,6 +147,7 @@ dependencies = [
 name = "tree-sitter-wasm"
 version = "0.1.0"
 dependencies = [
+ "streaming-iterator",
  "tree-sitter",
  "tree-sitter-html",
  "tree-sitter-java",
