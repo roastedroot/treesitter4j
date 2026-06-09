@@ -6,7 +6,7 @@ This library brings [tree-sitter](https://tree-sitter.github.io/tree-sitter/) pa
 
 ## Modules
 
-The project is a Maven multi-module build with two modules:
+Tree-sitter4j is a Maven multi-module project:
 
 ### `core`
 
