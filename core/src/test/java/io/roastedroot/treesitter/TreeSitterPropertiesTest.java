@@ -27,12 +27,14 @@ class TreeSitterPropertiesTest {
 
                 var key = propertyNode.child(0);
                 assertEquals("key",key.type());
+                assertEquals("server.port", properties.substring(key.startByte(), key.endByte()));
 
                 var separator = propertyNode.child(1);
                 assertEquals("=",separator.type());
 
                 var value = propertyNode.child(2);
                 assertEquals("value",value.type());
+                assertEquals("8080", properties.substring(value.startByte(), value.endByte()));
             }
         }
     }
