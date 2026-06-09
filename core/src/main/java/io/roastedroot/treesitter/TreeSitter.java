@@ -85,7 +85,7 @@ public final class TreeSitter implements AutoCloseable {
         return readResult();
     }
 
-    List<TreeSitterCapture> queryExec(int queryHandle, int nodeHandle, String source) {
+    List<TreeSitterQueryResult> queryExec(int queryHandle, int nodeHandle, String source) {
         byte[] sourceBytes = source.getBytes(StandardCharsets.UTF_8);
         int sourcePtr = exports.alloc(sourceBytes.length);
         try {
@@ -97,7 +97,7 @@ public final class TreeSitter implements AutoCloseable {
                 if (captureCount < 0) {
                     throw new TreeSitterException("Failed to execute query");
                 }
-                List<TreeSitterCapture> captures = new ArrayList<>(captureCount);
+                List<TreeSitterQueryResult> captures = new ArrayList<>(captureCount);
                 for (int i = 0; i < captureCount; i++) {
                     int captureNodeHandle = exports.queryCursorCaptureNode(cursorHandle, i);
                     int captureNameId = exports.queryCursorCaptureNameId(cursorHandle, i);
@@ -107,7 +107,7 @@ public final class TreeSitter implements AutoCloseable {
                     int rc = exports.queryCaptureName(queryHandle, captureNameId);
                     String captureName = (rc == 0) ? readResult() : "unknown";
 
-                    captures.add(new TreeSitterCapture(captureName, captureNode));
+                    captures.add(new TreeSitterQueryResult(captureName, captureNode));
                 }
                 return captures;
             } finally {

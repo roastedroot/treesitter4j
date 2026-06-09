@@ -24,7 +24,7 @@ public final class TreeSitterQuery implements AutoCloseable {
         return ts.queryCaptureName(handle, index);
     }
 
-    public List<TreeSitterCapture> exec(TreeSitterNode node, String source) {
+    public List<TreeSitterQueryResult> exec(TreeSitterNode node, String source) {
         return ts.queryExec(handle, node.handle(), source);
     }
 
