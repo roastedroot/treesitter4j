@@ -21,8 +21,10 @@
 
     <chicory.version>1.7.5</chicory.version>
     <junit.version>5.11.4</junit.version>
+
     <surefire-plugin.version>3.5.2</surefire-plugin.version>
     <maven-compiler-plugin.version>3.14.0</maven-compiler-plugin.version>
+    <build-helper-maven-plugin.version>3.6.1</build-helper-maven-plugin.version>
   </properties>
 
   <build>
