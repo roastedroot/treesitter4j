@@ -172,7 +172,7 @@ fn get_node(handle: i32) -> Option<&'static Node<'static>> {
     unsafe { NODES.get(handle as usize).and_then(|opt| opt.as_ref()) }
 }
 
-/// Get the type of a node. Result available via get_result_ptr/get_result_len.
+/// Get the node's type. Result available via get_result_ptr/get_result_len.
 #[no_mangle]
 pub extern "C" fn node_type(node_handle: i32) -> i32 {
     match get_node(node_handle) {
