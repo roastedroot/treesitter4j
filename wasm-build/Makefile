@@ -67,7 +67,7 @@ get-wasisdk: info
 	   DOWNLOAD_URL="https://github.com/WebAssembly/wasi-sdk/releases/download/wasi-sdk-${WASI_SDK_VERSION}/$${TAR_FILE}"; \
 	   \
 	   echo "Downloading wasi-sdk from: $${DOWNLOAD_URL}"; \
-	   wget -q --show-progress "$${DOWNLOAD_URL}" && \
+	   wget -q "$${DOWNLOAD_URL}" && \
 	   tar -xzf "$${TAR_FILE}" && \
 	   rm "$${TAR_FILE}" && \
 	   mv wasi-sdk-${WASI_SDK_VERSION}.0* "$(PWD)/wasi-sdk" && \
@@ -83,7 +83,7 @@ get-binaryen: info
 	   DOWNLOAD_URL="https://github.com/WebAssembly/binaryen/releases/download/version_$(BINARYEN_VERSION)/$(BINARYEN_TAR)"; \
 	   \
 	   echo "Downloading binaryen from: $${DOWNLOAD_URL}"; \
-	   wget -q --show-progress "$${DOWNLOAD_URL}" && \
+	   wget -q "$${DOWNLOAD_URL}" && \
 	   tar -xzf "$(BINARYEN_TAR)" && \
 	   rm "$(BINARYEN_TAR)" && \
 	   mv "$(BINARYEN_DIR)" "$(PWD)/binaryen" && \
