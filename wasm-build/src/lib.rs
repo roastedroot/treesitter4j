@@ -47,11 +47,21 @@ pub extern "C" fn get_result_len() -> i32 {
 
 const LANG_JSON: i32 = 0;
 const LANG_JAVA: i32 = 1;
+const LANG_PROPERTIES: i32 = 2;
+const LANG_HTML: i32 = 3;
+const LANG_XML: i32 = 4;
+const LANG_MARKDOWN: i32 = 5;
+const LANG_YAML: i32 = 6;
 
 fn get_language(lang_id: i32) -> Option<Language> {
     match lang_id {
         LANG_JSON => Some(tree_sitter_json::LANGUAGE.into()),
         LANG_JAVA => Some(tree_sitter_java::LANGUAGE.into()),
+        LANG_PROPERTIES => Some(tree_sitter_properties::LANGUAGE.into()),
+        LANG_HTML => Some(tree_sitter_html::LANGUAGE.into()),
+        LANG_XML => Some(tree_sitter_xml::LANGUAGE.into()),
+        LANG_MARKDOWN => Some(tree_sitter_markdown::LANGUAGE.into()),
+        LANG_YAML => Some(tree_sitter_yaml::LANGUAGE.into()),
         _ => None,
     }
 }

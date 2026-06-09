@@ -1,5 +1,9 @@
 package io.roastedroot.treesitter;
 
+/**
+ * Tree sitter grammar/language available
+ * The value id of the language must match the value defined within the wasm-build/src/rs.lib file !
+ */
 public enum Language {
     JSON(0),
     JAVA(1),
