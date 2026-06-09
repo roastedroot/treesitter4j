@@ -60,19 +60,37 @@ try (TreeSitter ts = TreeSitter.create();
 - Maven 3.9+
 - Rust toolchain with the `wasm32-wasip1` target (only needed to rebuild the WASM binary)
 
-### Build the Java module
+### Build tree-sitter4j
 
-If `wasm-build/wasm/tree-sitter.wasm` is already present (checked into the repo), you only need Maven:
+If `wasm-build/wasm/tree-sitter.wasm` is already present (checked into the repo), you only need to run this command:
 
 ```bash
-mvn install
+mvn clean install
 ```
 
 ### Rebuild the WASM binary
 
+If it is needed to rebuild the wasm binary file for whatever reason like to add a new grammar/language, then you will have to perform the following steps:
+- Add the new grammar to the Cargo.toml file under the section `[dependencies]`, 
+- Include the new language id and method to call under the rust file `wasm-build/src/lib.rs`. see section `// --- Language helpers ---`,
+- Update the README.md file to add the new language `## Supported languages` 
+
+Then, execute these commands
 ```bash
 cd wasm-build
 make all
 ```
+Additionally, include to this new language part of the Enum `io.roastedroot.treesitter.Language` and rebuild the java core module
+```java
+public enum Language {
+    JSON(0),
+    JAVA(1),
+    PROPERTIES(2),
+    HTML(3),
+    XML(4),
+    MARKDOWN(5),
+    YAML(6);
+    // NEWLANGUAGE(7);
+```
 
-This downloads WASI SDK and Binaryen, compiles the Rust crate to WASM, and optimizes the output. Then rebuild the Java module with `mvn install` from the project root.
+**NOTE**: The Makefile includes the instructions needed to install localy: wasi-sdk and Binaryen !
