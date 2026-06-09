@@ -19,12 +19,12 @@ build: ensure-target
 
 optimize: build
 	@which wasm-opt > /dev/null 2>&1 && \
-		wasm-opt -Oz --strip-debug \
+		wasm-opt -Oz --strip-debug --enable-bulk-memory --enable-nontrapping-float-to-int \
 			target/wasm32-wasip1/release/tree_sitter_wasm.wasm \
 			-o target/wasm32-wasip1/release/tree_sitter_wasm-opt.wasm || \
 		echo "wasm-opt not found, skipping optimization"
 
-release: build
+release: optimize
 	mkdir -p wasm
 	@if [ -f target/wasm32-wasip1/release/tree_sitter_wasm-opt.wasm ]; then \
 		cp target/wasm32-wasip1/release/tree_sitter_wasm-opt.wasm wasm/$(PROJECT).wasm; \
@@ -33,4 +33,4 @@ release: build
 	fi
 	@echo "Built wasm/$(PROJECT).wasm ($$(wc -c < wasm/$(PROJECT).wasm) bytes)"
 
-all: optimize release
+all: release
