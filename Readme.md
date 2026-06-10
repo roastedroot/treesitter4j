@@ -27,7 +27,7 @@ The following tree-sitter grammars are compiled into the WASM module and exposed
 
 | Language   | Crate                    | Version | Repository                                                                               |
 |------------|--------------------------|---------|------------------------------------------------------------------------------------------|
-| core | `tree-sitter`             | 0.26.9  | [tree-sitter](https://docs.rs/tree-sitter/0.26.9/tree_sitter/                            |
+| core       | `tree-sitter`            | 0.26.9  | [tree-sitter](https://docs.rs/tree-sitter/0.26.9/tree_sitter/                   |
 | JSON       | `tree-sitter-json`       | 0.24.8  | [tree-sitter-json](yeshttps://github.com/tree-sitter/tree-sitter-json)                   |
 | Java       | `tree-sitter-java`       | 0.23.5  | [tree-sitter-java](https://github.com/tree-sitter/tree-sitter-java)                      |
 | Properties | `tree-sitter-properties` | 0.3.0   | [tree-sitter-properties](https://github.com/tree-sitter-grammars/tree-sitter-properties) |
