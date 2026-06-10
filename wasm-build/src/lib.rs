@@ -204,7 +204,7 @@ pub extern "C" fn node_named_child_count(node_handle: i32) -> i32 {
 #[no_mangle]
 pub extern "C" fn node_named_child(node_handle: i32, index: i32) -> i32 {
     match get_node(node_handle) {
-        Some(node) => match node.named_child(index as usize) {
+        Some(node) => match node.named_child(index as u32) {
             Some(child) => store_node(child),
             None => -1,
         },
@@ -216,7 +216,7 @@ pub extern "C" fn node_named_child(node_handle: i32, index: i32) -> i32 {
 #[no_mangle]
 pub extern "C" fn node_child(node_handle: i32, index: i32) -> i32 {
     match get_node(node_handle) {
-        Some(node) => match node.child(index as usize) {
+        Some(node) => match node.child(index as u32) {
             Some(child) => store_node(child),
             None => -1,
         },
