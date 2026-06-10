@@ -4,6 +4,7 @@ import io.roastedroot.treesitter.Language;
 import io.roastedroot.treesitter.TreeSitterNode;
 import io.roastedroot.treesitter.TreeSitterTree;
 
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -20,6 +21,10 @@ public class ASTExporter {
     }
 
     private static ASTNode convertNode(TreeSitterNode node, String sourceCode) {
+        return convertNode(node, sourceCode, sourceCode.getBytes(StandardCharsets.UTF_8));
+    }
+
+    private static ASTNode convertNode(TreeSitterNode node, String sourceCode, byte[] sourceBytes) {
         String type = node.type();
         int startByte = node.startByte();
         int endByte = node.endByte();
@@ -31,14 +36,15 @@ public class ASTExporter {
         for (int i = 0; i < namedChildCount; i++) {
             TreeSitterNode child = node.namedChild(i);
             if (child != null) {
-                children.add(convertNode(child, sourceCode));
+                children.add(convertNode(child, sourceCode, sourceBytes));
             }
         }
 
         // Store text only for leaf nodes (no named children)
+        // Tree-sitter uses UTF-8 byte offsets, so extract from the byte array
         String text = null;
-        if (namedChildCount == 0) {
-            text = sourceCode.substring(startByte, endByte);
+        if (namedChildCount == 0 && startByte >= 0 && endByte <= sourceBytes.length) {
+            text = new String(sourceBytes, startByte, endByte - startByte, StandardCharsets.UTF_8);
         }
 
         return new ASTNode(type, startByte, endByte, named, text, children);
