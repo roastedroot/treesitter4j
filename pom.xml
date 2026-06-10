@@ -17,9 +17,10 @@
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-    <maven.compiler.release>17</maven.compiler.release>
+    <maven.compiler.release>21</maven.compiler.release>
 
     <chicory.version>1.7.5</chicory.version>
+    <endive.version>latest</endive.version>
     <junit.version>5.11.4</junit.version>
     <jackson.version>2.17.2</jackson.version>
 
@@ -27,6 +28,20 @@
     <maven-compiler-plugin.version>3.14.0</maven-compiler-plugin.version>
     <build-helper-maven-plugin.version>3.6.1</build-helper-maven-plugin.version>
   </properties>
+
+  <dependencyManagement>
+    <dependencies>
+      <!--
+      <dependency>
+        <groupId>run.endive</groupId>
+        <artifactId>bom</artifactId>
+        <version>${endive.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+      -->
+    </dependencies>
+  </dependencyManagement>
 
   <build>
     <pluginManagement>
