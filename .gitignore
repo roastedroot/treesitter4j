@@ -4,5 +4,4 @@
 .claude
 target
 
-wasm-build/binaryen/
 wasm-build/wasi-sdk

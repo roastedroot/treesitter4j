@@ -42,6 +42,26 @@ public final class TreeSitterNode {
         return ts.nodeEndByte(handle);
     }
 
+    public int startRow() {
+        return ts.nodeStartRow(handle);
+    }
+
+    public int startColumn() {
+        return ts.nodeStartColumn(handle);
+    }
+
+    public int endRow() {
+        return ts.nodeEndRow(handle);
+    }
+
+    public int endColumn() {
+        return ts.nodeEndColumn(handle);
+    }
+
+    public String text(String source) {
+        return source.substring(startByte(), endByte());
+    }
+
     public boolean isNamed() {
         return ts.nodeIsNamed(handle);
     }

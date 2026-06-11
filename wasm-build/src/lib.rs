@@ -3,6 +3,91 @@ use std::slice;
 use streaming_iterator::StreamingIterator;
 use tree_sitter::{Language, Node, Parser, Tree, Query, QueryCursor};
 
+// --- libc shims for wasm32-unknown-unknown ---
+
+const ALLOC_HEADER: usize = 8;
+
+#[no_mangle]
+pub unsafe extern "C" fn malloc(size: usize) -> *mut u8 {
+    if size == 0 { return core::ptr::null_mut(); }
+    let total = ALLOC_HEADER + size;
+    let layout = std::alloc::Layout::from_size_align_unchecked(total, 8);
+    let ptr = std::alloc::alloc(layout);
+    if ptr.is_null() { return ptr; }
+    *(ptr as *mut usize) = size;
+    ptr.add(ALLOC_HEADER)
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn free(ptr: *mut u8) {
+    if ptr.is_null() { return; }
+    let header = ptr.sub(ALLOC_HEADER);
+    let size = *(header as *const usize);
+    let layout = std::alloc::Layout::from_size_align_unchecked(ALLOC_HEADER + size, 8);
+    std::alloc::dealloc(header, layout);
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn calloc(count: usize, size: usize) -> *mut u8 {
+    let total = count * size;
+    let ptr = malloc(total);
+    if !ptr.is_null() { core::ptr::write_bytes(ptr, 0, total); }
+    ptr
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn realloc(ptr: *mut u8, new_size: usize) -> *mut u8 {
+    if ptr.is_null() { return malloc(new_size); }
+    if new_size == 0 { free(ptr); return core::ptr::null_mut(); }
+    let header = ptr.sub(ALLOC_HEADER);
+    let old_size = *(header as *const usize);
+    let old_layout = std::alloc::Layout::from_size_align_unchecked(ALLOC_HEADER + old_size, 8);
+    let new_header = std::alloc::realloc(header, old_layout, ALLOC_HEADER + new_size);
+    if new_header.is_null() { return new_header; }
+    *(new_header as *mut usize) = new_size;
+    new_header.add(ALLOC_HEADER)
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn strcmp(s1: *const u8, s2: *const u8) -> i32 {
+    let mut a = s1;
+    let mut b = s2;
+    loop {
+        let ca = *a;
+        let cb = *b;
+        if ca != cb || ca == 0 {
+            return ca as i32 - cb as i32;
+        }
+        a = a.add(1);
+        b = b.add(1);
+    }
+}
+
+#[no_mangle]
+pub extern "C" fn towlower(c: u32) -> u32 {
+    if c >= 'A' as u32 && c <= 'Z' as u32 { c + 32 } else { c }
+}
+
+#[no_mangle]
+pub extern "C" fn towupper(c: u32) -> u32 {
+    if c >= 'a' as u32 && c <= 'z' as u32 { c - 32 } else { c }
+}
+
+#[no_mangle]
+pub extern "C" fn iswalpha(c: u32) -> i32 {
+    if (c >= 'A' as u32 && c <= 'Z' as u32) || (c >= 'a' as u32 && c <= 'z' as u32) { 1 } else { 0 }
+}
+
+#[no_mangle]
+pub extern "C" fn iswalnum(c: u32) -> i32 {
+    if iswalpha(c) != 0 || (c >= '0' as u32 && c <= '9' as u32) { 1 } else { 0 }
+}
+
+#[no_mangle]
+pub extern "C" fn iswspace(c: u32) -> i32 {
+    if c == ' ' as u32 || c == '\t' as u32 || c == '\n' as u32 || c == '\r' as u32 || c == 0x0b || c == 0x0c { 1 } else { 0 }
+}
+
 // --- Global state (wasm is single-threaded) ---
 
 static mut PARSERS: Vec<Option<Parser>> = Vec::new();
@@ -44,27 +129,31 @@ pub extern "C" fn get_result_len() -> i32 {
     unsafe { RESULT_BUF.len() as i32 }
 }
 
-// --- Language helpers ---
+// --- Language registry ---
+// To add a new grammar:
+//   1. Add a crate dependency in Cargo.toml
+//   2. Add a single entry here (id must match Language.java)
+//   3. Add a matching enum variant in Language.java
 
-const LANG_JSON: i32 = 0;
-const LANG_JAVA: i32 = 1;
-const LANG_PROPERTIES: i32 = 2;
-const LANG_HTML: i32 = 3;
-const LANG_XML: i32 = 4;
-const LANG_MARKDOWN: i32 = 5;
-const LANG_YAML: i32 = 6;
+macro_rules! define_languages {
+    ( $( $id:expr => $expr:expr ),* $(,)? ) => {
+        fn get_language(lang_id: i32) -> Option<Language> {
+            match lang_id {
+                $( $id => Some($expr.into()), )*
+                _ => None,
+            }
+        }
+    };
+}
 
-fn get_language(lang_id: i32) -> Option<Language> {
-    match lang_id {
-        LANG_JSON => Some(tree_sitter_json::LANGUAGE.into()),
-        LANG_JAVA => Some(tree_sitter_java::LANGUAGE.into()),
-        LANG_PROPERTIES => Some(tree_sitter_properties::LANGUAGE.into()),
-        LANG_HTML => Some(tree_sitter_html::LANGUAGE.into()),
-        LANG_XML => Some(tree_sitter_xml::LANGUAGE_XML.into()),
-        LANG_MARKDOWN => Some(tree_sitter_md::LANGUAGE.into()),
-        LANG_YAML => Some(tree_sitter_yaml::LANGUAGE.into()),
-        _ => None,
-    }
+define_languages! {
+    0 => tree_sitter_json::LANGUAGE,
+    1 => tree_sitter_java::LANGUAGE,
+    2 => tree_sitter_properties::LANGUAGE,
+    3 => tree_sitter_html::LANGUAGE,
+    4 => tree_sitter_xml::LANGUAGE_XML,
+    5 => tree_sitter_md::LANGUAGE,
+    6 => tree_sitter_yaml::LANGUAGE,
 }
 
 // --- Parser API ---
@@ -255,7 +344,38 @@ pub extern "C" fn node_end_byte(node_handle: i32) -> i32 {
     }
 }
 
-/// Check if a node is named.
+#[no_mangle]
+pub extern "C" fn node_start_row(node_handle: i32) -> i32 {
+    match get_node(node_handle) {
+        Some(node) => node.start_position().row as i32,
+        None => -1,
+    }
+}
+
+#[no_mangle]
+pub extern "C" fn node_start_column(node_handle: i32) -> i32 {
+    match get_node(node_handle) {
+        Some(node) => node.start_position().column as i32,
+        None => -1,
+    }
+}
+
+#[no_mangle]
+pub extern "C" fn node_end_row(node_handle: i32) -> i32 {
+    match get_node(node_handle) {
+        Some(node) => node.end_position().row as i32,
+        None => -1,
+    }
+}
+
+#[no_mangle]
+pub extern "C" fn node_end_column(node_handle: i32) -> i32 {
+    match get_node(node_handle) {
+        Some(node) => node.end_position().column as i32,
+        None => -1,
+    }
+}
+
 #[no_mangle]
 pub extern "C" fn node_is_named(node_handle: i32) -> i32 {
     match get_node(node_handle) {
