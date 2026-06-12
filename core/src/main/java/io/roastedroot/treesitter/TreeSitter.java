@@ -1,6 +1,9 @@
 package io.roastedroot.treesitter;
 
-import com.dylibso.chicory.runtime.Instance;
+import run.endive.runtime.ImportValues;
+import run.endive.runtime.Instance;
+import run.endive.wasi.WasiOptions;
+import run.endive.wasi.WasiPreview1;
 
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
