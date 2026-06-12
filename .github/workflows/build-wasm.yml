@@ -21,7 +21,7 @@ jobs:
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
         with:
-          targets: wasm32-wasip1
+          targets: wasm32-unknown-unknown
 
       - name: Cache Cargo registry and build
         uses: actions/cache@v4
@@ -39,8 +39,7 @@ jobs:
         with:
           path: |
             wasm-build/wasi-sdk
-            wasm-build/binaryen
-          key: wasm-tools-wasisdk-binaryen
+          key: wasm-tools-wasisdk
 
       - name: Build WASM module
         working-directory: wasm-build
