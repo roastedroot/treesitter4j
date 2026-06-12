@@ -19,7 +19,7 @@
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     <maven.compiler.release>17</maven.compiler.release>
 
-    <endive.version>999-SNAPSHOT</endive.version>
+    <endive.version>0.0.1</endive.version>
     <chicory.version>1.7.5</chicory.version>
     <junit.version>5.11.4</junit.version>
     <jackson.version>2.17.2</jackson.version>
