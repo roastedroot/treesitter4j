@@ -11,20 +11,11 @@ import java.util.List;
 
 public final class TreeSitter implements AutoCloseable {
 
-    private final WasiPreview1 wasi;
     private final TreeSitter_ModuleExports exports;
 
     private TreeSitter() {
-        this.wasi = WasiPreview1.builder()
-                .withOptions(WasiOptions.builder().build())
-                .build();
-
         Instance instance = Instance.builder(TreeSitterModule.load())
                 .withMachineFactory(TreeSitterModule::create)
-                .withImportValues(
-                        ImportValues.builder()
-                                .addFunction(wasi.toHostFunctions())
-                                .build())
                 .build();
 
         this.exports = new TreeSitter_ModuleExports(instance);
@@ -37,6 +28,12 @@ public final class TreeSitter implements AutoCloseable {
     public TreeSitterParser newParser() {
         int handle = exports.parserNew();
         return new TreeSitterParser(handle, this);
+    }
+
+    public TreeSitterParser newParser(Language language) {
+        TreeSitterParser parser = newParser();
+        parser.setLanguage(language);
+        return parser;
     }
 
     void deleteParser(int handle) {
@@ -195,6 +192,22 @@ public final class TreeSitter implements AutoCloseable {
         return exports.nodeEndByte(nodeHandle);
     }
 
+    int nodeStartRow(int nodeHandle) {
+        return exports.nodeStartRow(nodeHandle);
+    }
+
+    int nodeStartColumn(int nodeHandle) {
+        return exports.nodeStartColumn(nodeHandle);
+    }
+
+    int nodeEndRow(int nodeHandle) {
+        return exports.nodeEndRow(nodeHandle);
+    }
+
+    int nodeEndColumn(int nodeHandle) {
+        return exports.nodeEndColumn(nodeHandle);
+    }
+
     boolean nodeIsNamed(int nodeHandle) {
         return exports.nodeIsNamed(nodeHandle) == 1;
     }
@@ -207,8 +220,5 @@ public final class TreeSitter implements AutoCloseable {
 
     @Override
     public void close() {
-        if (wasi != null) {
-            wasi.close();
-        }
     }
 }

@@ -1,6 +1,5 @@
 PROJECT := tree-sitter
 WASI_SDK_VERSION := 33
-BINARYEN_VERSION := 130
 PWD := $(CURDIR)
 
 # Ensure cargo (installed via rustup) is on PATH
@@ -35,9 +34,7 @@ else
     ARCH := unknown
 endif
 
-# Binaryen archive names follow the format: binaryen-version_XXX-ARCH-PLATFORM.tar.gz
-BINARYEN_TAR := binaryen-version_$(BINARYEN_VERSION)-$(ARCH)-$(PLATFORM).tar.gz
-BINARYEN_DIR := binaryen-version_$(BINARYEN_VERSION)
+WASI_SYSROOT := $(PWD)/wasi-sdk/share/wasi-sysroot
 
 # =========================================================================
 # RECIPES / TARGETS
@@ -56,7 +53,6 @@ info:
 	@echo "--- System Diagnostics ---"
 	@echo "Mapped Platform:   $(PLATFORM)"
 	@echo "Mapped Arch:       $(ARCH)"
-	@echo "Binaryen Target:   $(BINARYEN_TAR)"
 	@echo "--------------------------"
 
 .PHONY: get-wasisdk
@@ -77,23 +73,6 @@ get-wasisdk: info
 	   echo "✅ wasi-sdk successfully installed!"; \
 	fi
 
-.PHONY: get-binaryen
-get-binaryen: info
-	@if [ "$(PLATFORM)" = "unknown" ] || [ "$(ARCH)" = "unknown" ]; then \
-	   echo "❌ Cannot install: Unsupported platform."; exit 1; \
-	fi
-	@if [ ! -d "$(PWD)/binaryen" ]; then \
-	   DOWNLOAD_URL="https://github.com/WebAssembly/binaryen/releases/download/version_$(BINARYEN_VERSION)/$(BINARYEN_TAR)"; \
-	   \
-	   echo "Downloading binaryen from: $${DOWNLOAD_URL}"; \
-	   wget -q "$${DOWNLOAD_URL}" && \
-	   tar -xzf "$(BINARYEN_TAR)" && \
-	   rm "$(BINARYEN_TAR)" && \
-	   mv "$(BINARYEN_DIR)" "$(PWD)/binaryen" && \
-	   echo "✅ binaryen successfully installed to $(PWD)/binaryen"; \
-	fi
-
-
 .PHONY: get-rust
 get-rust:
 	@if ! command -v cargo >/dev/null 2>&1; then \
@@ -104,39 +83,30 @@ get-rust:
 	else \
 	   echo "✅ Rust/Cargo already installed: $$(cargo --version)"; \
 	fi
-	@if ! rustup target list --installed | grep -q wasm32-wasip1; then \
-	   echo "Adding wasm32-wasip1 target..."; \
-	   rustup target add wasm32-wasip1 && \
-	   echo "✅ wasm32-wasip1 target added!"; \
+	@if ! rustup target list --installed | grep -q wasm32-unknown-unknown; then \
+	   echo "Adding wasm32-unknown-unknown target..."; \
+	   rustup target add wasm32-unknown-unknown && \
+	   echo "✅ wasm32-unknown-unknown target added!"; \
 	else \
-	   echo "✅ wasm32-wasip1 target already installed"; \
+	   echo "✅ wasm32-unknown-unknown target already installed"; \
 	fi
 
 .PHONY: build
 build:
 	WASI_SDK_PATH=$(PWD)/wasi-sdk \
-	CC_wasm32_wasip1=$(PWD)/wasi-sdk/bin/clang \
-	CFLAGS_wasm32_wasip1="--sysroot=$(PWD)/wasi-sdk/share/wasi-sysroot" \
-	cargo build --target wasm32-wasip1 --release
-
-.PHONY: optimize
-optimize:
-	${PWD}/binaryen/bin/wasm-opt -Oz --strip-debug --enable-bulk-memory --enable-nontrapping-float-to-int \
-	  target/wasm32-wasip1/release/tree_sitter_wasm.wasm \
-	  -o target/wasm32-wasip1/release/tree_sitter-opt.wasm
+	CC_wasm32_unknown_unknown=$(PWD)/wasi-sdk/bin/clang \
+	CFLAGS_wasm32_unknown_unknown="-isystem $(WASI_SYSROOT)/include/wasm32-wasip1 -Wno-incompatible-pointer-types -Wno-implicit-function-declaration" \
+	CARGO_TARGET_WASM32_UNKNOWN_UNKNOWN_RUSTFLAGS="-C link-arg=--allow-multiple-definition" \
+	cargo build --target wasm32-unknown-unknown --release
 
 .PHONY: release
 release:
 	mkdir -p wasm
-	@if [ -f target/wasm32-wasip1/release/tree_sitter_wasm-opt.wasm ]; then \
-		cp target/wasm32-wasip1/release/tree_sitter_wasm-opt.wasm wasm/$(PROJECT).wasm; \
-	else \
-		cp target/wasm32-wasip1/release/tree_sitter_wasm.wasm wasm/$(PROJECT).wasm; \
-	fi
+	cp target/wasm32-unknown-unknown/release/tree_sitter_wasm.wasm wasm/$(PROJECT).wasm
 	@echo "Built wasm/$(PROJECT).wasm ($$(wc -c < wasm/$(PROJECT).wasm) bytes)"
 
 .PHONY: local
-local: build optimize release
+local: build release
 
 .PHONY: all
-all: get-rust get-wasisdk get-binaryen local
+all: get-rust get-wasisdk local

@@ -27,19 +27,6 @@
     </dependencyManagement>
 
     <dependencies>
-        <!--
-        <dependency>
-          <groupId>com.dylibso.chicory</groupId>
-          <artifactId>runtime</artifactId>
-          <version>${chicory.version}</version>
-        </dependency>
-        <dependency>
-          <groupId>com.dylibso.chicory</groupId>
-          <artifactId>wasi</artifactId>
-          <version>${chicory.version}</version>
-        </dependency>
-        -->
-
         <dependency>
             <groupId>run.endive</groupId>
             <artifactId>wasi</artifactId>
