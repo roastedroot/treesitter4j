@@ -5,14 +5,14 @@
 
     <parent>
         <groupId>io.roastedroot</groupId>
-        <artifactId>tree-sitter4j-parent</artifactId>
+        <artifactId>treesitter4j-parent</artifactId>
         <version>999-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
-    <artifactId>tree-sitter4j</artifactId>
+    <artifactId>treesitter4j</artifactId>
     <packaging>jar</packaging>
-    <name>tree-sitter4j</name>
+    <name>treesitter4j</name>
 
     <dependencyManagement>
         <dependencies>

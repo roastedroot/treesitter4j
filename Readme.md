@@ -1,4 +1,4 @@
-# tree-sitter4j
+# treesitter4j
 
 tree-sitter API for Java using WebAssembly.
 
@@ -6,7 +6,7 @@ This library brings [tree-sitter](https://tree-sitter.github.io/tree-sitter/) pa
 
 ## Modules
 
-Tree-sitter4j is a Maven multi-module project:
+treesitter4j is a Maven multi-modules project:
 
 ### `core`
 
@@ -61,7 +61,7 @@ try (TreeSitter ts = TreeSitter.create();
 - Maven 3.9+
 - Rust toolchain with the `wasm32-wasip1` target (only needed to rebuild the WASM binary)
 
-### Build tree-sitter4j
+### Build treesitter4j
 
 If `wasm-build/wasm/tree-sitter.wasm` is already present (checked into the repo), you only need to run this command:
 
