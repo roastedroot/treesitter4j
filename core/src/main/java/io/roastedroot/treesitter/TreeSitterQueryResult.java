@@ -4,10 +4,16 @@ public final class TreeSitterQueryResult {
 
     private final String name;
     private final TreeSitterNode node;
+    private final String source;
 
-    TreeSitterQueryResult(String name, TreeSitterNode node) {
+    TreeSitterQueryResult(String source, String name, TreeSitterNode node) {
+        this.source = source;
         this.name = name;
         this.node = node;
+    }
+
+    public String source() {
+        return source;
     }
 
     public String name() {
