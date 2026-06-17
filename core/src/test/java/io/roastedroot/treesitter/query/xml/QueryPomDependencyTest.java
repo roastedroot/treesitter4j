@@ -12,9 +12,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class QueryPomDependencyTest {
 
-    @Test
-    void queryPom() {
-        String source = """
+    String source = """
                 <?xml version="1.0" encoding="UTF-8"?>
                  <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                  	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
@@ -86,6 +84,57 @@ class QueryPomDependencyTest {
                  </project>
                 """;
 
+    // Elapsed time is about: 20-22s :-(
+    @Test
+    void queryPomDependencyAndVersion() {
+        String query = """
+                (element
+                  (STag (Name) @tag.dep (#eq? @tag.dep "dependency"))
+                  (content
+                    (element
+                      (STag (Name) @tag.g (#eq? @tag.g "groupId"))
+                      (content (CharData) @group.id))
+                    (element
+                      (STag (Name) @tag.a (#eq? @tag.a "artifactId"))
+                      (content (CharData) @artifact.id))
+                    (element
+                      (STag (Name) @tag.v (#eq? @tag.v "version"))
+                      (content (CharData) @version))?
+                  )) @dependency.block
+                """;
+
+        long startTime = System.nanoTime();
+
+        try (var ts = TreeSitter.create();
+                var parser = ts.newParser()) {
+
+            parser.setLanguage(Language.XML);
+
+            try (var tree = parser.parseString(source);
+                    var treeQuery = ts.newQuery(Language.XML,
+                            query)) {
+
+                TreeSitterNode rootNode = tree.rootNode();
+
+                assertEquals(1, treeQuery.patternCount());
+                assertEquals(8, treeQuery.captureCount());
+                assertEquals("tag.dep", treeQuery.captureName(0));
+
+                List<TreeSitterQueryResult> captures = treeQuery.exec(rootNode, source);
+                assertFalse(captures.isEmpty());
+
+                long elapsedMs = (System.nanoTime() - startTime) / 1_000_000;
+                System.out.println("Elapsed: " + elapsedMs + " ms");
+
+                TreeSitterQueryResult capture = captures.get(0);
+                assertEquals("dependency.block", capture.name());
+                assertEquals("element", capture.node().type());
+            }
+        }
+    }
+
+    @Test
+    void queryPomDependency() {
         String query = """
                 (element
                   (STag (Name) @tag.dep (#eq? @tag.dep "dependency"))
@@ -98,6 +147,8 @@ class QueryPomDependencyTest {
                       (content (CharData) @artifact.id))
                   )) @dependency.block
                 """;
+
+        long startTime = System.nanoTime();
 
         try (var ts = TreeSitter.create();
              var parser = ts.newParser()) {
@@ -116,6 +167,18 @@ class QueryPomDependencyTest {
 
                 List<TreeSitterQueryResult> captures = treeQuery.exec(rootNode, source);
                 assertFalse(captures.isEmpty());
+
+                long elapsedMs = (System.nanoTime() - startTime) / 1_000_000;
+                System.out.println("Elapsed: " + elapsedMs + " ms");
+
+                /*
+                captures.forEach(c -> {
+                    System.out.println(c.name());
+                    System.out.println(source.substring(
+                            c.node().startByte(),
+                            c.node().endByte()));
+                });
+                */
 
                 TreeSitterQueryResult capture = captures.get(0);
                 assertEquals("dependency.block", capture.name());
