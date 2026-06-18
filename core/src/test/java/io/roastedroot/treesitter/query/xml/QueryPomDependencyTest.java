@@ -6,6 +6,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -106,15 +107,14 @@ class QueryPomDependencyTest {
                   (content
                     (element
                       (STag . (Name) @tag.g (#eq? @tag.g "groupId"))
-                      (content (CharData) @group.id))
+                      (content . (CharData) @groupId))
                     (element
                       (STag . (Name) @tag.a (#eq? @tag.a "artifactId"))
-                      (content (CharData) @artifact.id))
+                      (content . (CharData) @artifactId))
                     (element
-                      (STag . (Name) @tag.v (#eq? @tag.v "version"))?
-                      (content (CharData) @version))
-                  )
-                ) @dependency.block
+                      (STag . (Name) @tag.v (#eq? @tag.v "version"))
+                      (content . (CharData) @version))?
+                  )) @dependency.block
                 """;
 
         long startTime = System.nanoTime();
@@ -137,6 +137,16 @@ class QueryPomDependencyTest {
         TreeSitterQueryResult capture = captures.get(0);
         assertEquals("dependency.block", capture.name());
         assertEquals("element", capture.node().type());
+
+        //showCaptures(captures);
+
+        capture = captures.get(18);
+        String pom = source.substring(
+                capture.node().startByte(),
+                capture.node().endByte());
+        assertTrue(pom.contains("<groupId>io.jsonwebtoken</groupId>"));
+        assertTrue(pom.contains("<artifactId>jjwt</artifactId"));
+        assertTrue(pom.contains("<version>0.9.1</version"));
     }
 
     @Test
@@ -147,10 +157,10 @@ class QueryPomDependencyTest {
                   (content
                     (element
                       (STag . (Name) @tag.g (#eq? @tag.g "groupId"))
-                      (content (CharData) @group.id))
+                      (content . (CharData) @group.id))
                     (element
                       (STag . (Name) @tag.a (#eq? @tag.a "artifactId"))
-                      (content (CharData) @artifact.id))
+                      (content . (CharData) @artifact.id))
                   )) @dependency.block
                 """;
 
@@ -171,15 +181,6 @@ class QueryPomDependencyTest {
         long elapsedMs = (System.nanoTime() - startTime) / 1_000_000;
         System.out.println("Elapsed: " + elapsedMs + " ms");
 
-                /*
-                captures.forEach(c -> {
-                    System.out.println(c.name());
-                    System.out.println(source.substring(
-                            c.node().startByte(),
-                            c.node().endByte()));
-                });
-                */
-
         TreeSitterQueryResult capture = captures.get(0);
         assertEquals("dependency.block", capture.name());
         assertEquals("element", capture.node().type());
@@ -188,5 +189,16 @@ class QueryPomDependencyTest {
                 capture.node().startByte(),
                 capture.node().endByte());
         assertTrue(pom.contains("<groupId>org.springframework.boot</groupId>"));
+    }
+
+    private void showCaptures(List<TreeSitterQueryResult> captures) {
+        AtomicInteger counter = new AtomicInteger();
+        captures.forEach(c -> {
+                    System.out.println(counter.getAndIncrement());
+                    System.out.println(c.name());
+                    System.out.println(source.substring(
+                            c.node().startByte(),
+                            c.node().endByte()));
+                });
     }
 }
