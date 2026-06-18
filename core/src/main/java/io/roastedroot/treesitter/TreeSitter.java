@@ -104,7 +104,7 @@ public final class TreeSitter implements AutoCloseable {
                     int rc = exports.queryCaptureName(queryHandle, captureNameId);
                     String captureName = (rc == 0) ? readResult() : "unknown";
 
-                    captures.add(new TreeSitterQueryResult(source, captureName, captureNode));
+                    captures.add(new TreeSitterQueryResult(captureName, captureNode));
                 }
                 return captures;
             } finally {
