@@ -15,6 +15,8 @@ class QueryPomDependencyTest {
     private static TreeSitter ts;
     private static TreeSitterParser parser;
 
+    public record Dependency(String blockText, String groupId, String artifactId, String version) {}
+
     @BeforeAll
     static void init() {
         ts = TreeSitter.create();
@@ -76,11 +78,13 @@ class QueryPomDependencyTest {
              			<scope>test</scope>
              		</dependency>
             
-             		<!-- <dependency>
+             		<!--
+             		<dependency>
              			<groupId>org.springframework.boot</groupId>
              			<artifactId>spring-boot-starter-security</artifactId>
-             		</dependency> -->
-             			<dependency>
+             		</dependency>
+             		-->
+             		<dependency>
              				<groupId>io.jsonwebtoken</groupId>
              				<artifactId>jjwt</artifactId>
              				<version>0.9.1</version>
@@ -103,7 +107,7 @@ class QueryPomDependencyTest {
     void queryPomDependencyAndVersion() {
         String query = """
                 (element
-                  (STag . (Name) @tag.dep (#eq? @tag.dep "dependency"))
+                  (STag . (Name) @tag.dep (#match? @tag.dep "(dependency|parent)"))
                   (content
                     (element
                       (STag . (Name) @tag.g (#eq? @tag.g "groupId"))
@@ -112,7 +116,7 @@ class QueryPomDependencyTest {
                       (STag . (Name) @tag.a (#eq? @tag.a "artifactId"))
                       (content . (CharData) @artifactId))
                     (element
-                      (STag . (Name) @tag.v (#eq? @tag.v "version"))
+                      (STag . (Name) @tag.o (#match? @tag.o "(version|scope|optional)"))
                       (content . (CharData) @version))?
                   )) @dependency.block
                 """;
@@ -138,15 +142,39 @@ class QueryPomDependencyTest {
         assertEquals("dependency.block", capture.name());
         assertEquals("element", capture.node().type());
 
-        //showCaptures(captures);
+        showCaptures(captures);
 
-        capture = captures.get(18);
+        /*
+        capture = captures.get(26);
         String pom = source.substring(
                 capture.node().startByte(),
                 capture.node().endByte());
         assertTrue(pom.contains("<groupId>io.jsonwebtoken</groupId>"));
         assertTrue(pom.contains("<artifactId>jjwt</artifactId"));
         assertTrue(pom.contains("<version>0.9.1</version"));
+         */
+
+        boolean hasFullJjwtDependency = captures.stream()
+                // 1. Isolate just the parent wrapper blocks
+                .filter(c -> "dependency.block".equals(c.name()))
+
+                // 2. Extract the string from the source
+                .map(c -> {
+                    int start = c.node().startByte();
+                    int end = c.node().endByte();
+                    // Note: Use getBytes() if you are still working around byte-index drift bugs
+                    return source.substring(start, end);
+                })
+
+                // 3. Ensure the single block text cluster satisfies ALL your criteria simultaneously
+                .anyMatch(blockText ->
+                        blockText.contains("<groupId>io.jsonwebtoken</groupId>") &&
+                                blockText.contains("<artifactId>jjwt</artifactId>") &&
+                                blockText.contains("<version>0.9.1</version>")
+                );
+
+        assertTrue(hasFullJjwtDependency);
+
     }
 
     @Test
