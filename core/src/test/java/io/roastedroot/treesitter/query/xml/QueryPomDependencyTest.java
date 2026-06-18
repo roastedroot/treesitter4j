@@ -106,19 +106,28 @@ class QueryPomDependencyTest {
     @Test
     void queryPomDependencyAndVersion() {
         String query = """
-                (element
-                  (STag . (Name) @tag.dep (#match? @tag.dep "(dependency|parent)"))
-                  (content
-                    (element
-                      (STag . (Name) @tag.g (#eq? @tag.g "groupId"))
-                      (content . (CharData) @groupId))
-                    (element
-                      (STag . (Name) @tag.a (#eq? @tag.a "artifactId"))
-                      (content . (CharData) @artifactId))
-                    (element
-                      (STag . (Name) @tag.o (#match? @tag.o "(version|scope|optional)"))
-                      (content . (CharData) @version))?
-                  )) @dependency.block
+(element
+  (STag . (Name) @tag.dep (#match? @tag.dep "(dependency|parent)"))
+  (content
+    (element
+      (STag . (Name) @tag.g (#eq? @tag.g "groupId"))
+      (content . (CharData) @groupId))
+    (element
+      (STag . (Name) @tag.a (#eq? @tag.a "artifactId"))
+      (content . (CharData) @artifactId))
+    [
+      (element
+        (STag . (Name) @tag.v (#eq? @tag.v "version"))
+        (content . (CharData) @version))?
+      (element
+        (STag . (Name) @tag.s (#eq? @tag.s "scope"))
+        (content . (CharData) @scope))?
+      (element
+        (STag . (Name) @tag.o (#eq? @tag.o "optional"))
+        (content . (CharData) @optional))?
+      ]
+  )
+) @dependency.block
                 """;
 
         long startTime = System.nanoTime();
@@ -129,7 +138,7 @@ class QueryPomDependencyTest {
         TreeSitterNode rootNode = tree.rootNode();
 
         assertEquals(1, treeQuery.patternCount());
-        assertEquals(8, treeQuery.captureCount());
+        assertEquals(12, treeQuery.captureCount());
         assertEquals("tag.dep", treeQuery.captureName(0));
 
         List<TreeSitterQueryResult> captures = treeQuery.exec(rootNode, source);
@@ -142,7 +151,7 @@ class QueryPomDependencyTest {
         assertEquals("dependency.block", capture.name());
         assertEquals("element", capture.node().type());
 
-        showCaptures(captures);
+        //showCaptures(captures);
 
         /*
         capture = captures.get(26);
