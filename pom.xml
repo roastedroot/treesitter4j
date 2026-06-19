@@ -27,6 +27,12 @@
       <email>andrea.peruffo1982@gmail.com</email>
       <organization>IBM</organization>
     </developer>
+    <developer>
+      <id>cmoulliard</id>
+      <name>Charles Moulliard</name>
+      <email>cmoulliard@ibm.com</email>
+      <organization>IBM</organization>
+    </developer>
   </developers>
 
   <scm>
