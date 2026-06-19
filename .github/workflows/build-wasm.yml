@@ -24,7 +24,7 @@ jobs:
           targets: wasm32-unknown-unknown
 
       - name: Cache Cargo registry and build
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: |
             ~/.cargo/registry
@@ -35,7 +35,7 @@ jobs:
             wasm-${{ runner.os }}-cargo-
 
       - name: Cache build tools
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: |
             wasm-build/wasi-sdk
