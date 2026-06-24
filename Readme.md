@@ -56,7 +56,7 @@ try (TreeSitter ts = TreeSitter.create();
 
 ## Thread-safe pooling
 
-Each `TreeSitter` instance owns an isolated WASM module with its own linear memory, so instances must not be shared across threads. `TreeSitterPool` caps the number of live instances and reuses them across parse operations. It uses only lock-free data structures and `Semaphore` internally (no `synchronized` blocks), so it is safe to use with virtual threads.
+Each `TreeSitter` instance owns an isolated WASM module with its own linear memory, so instances must not be shared across threads. `TreeSitterPool` caps the number of **concurrently borrowed** instances and reuses them across parse operations. The pool size limits parallelism, not languages — each borrowed instance can parse any language, so a pool of 4 can serve all supported grammars; `borrow()` simply blocks when all instances are already in use. It uses only lock-free data structures and `Semaphore` internally (no `synchronized` blocks), so it is safe to use with virtual threads.
 
 ```java
 try (TreeSitterPool pool = TreeSitterPool.create(4)) {
