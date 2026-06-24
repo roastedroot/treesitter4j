@@ -2,7 +2,7 @@
 
 tree-sitter API for Java using WebAssembly.
 
-This library brings [tree-sitter](https://tree-sitter.github.io/tree-sitter/) parsing capabilities to Java by compiling tree-sitter and its language grammars to [WebAssembly](https://webassembly.org/) and running them through [Chicory](https://github.com/nicholasgasior/chicory), a pure-Java WASM runtime. No JNI or native binaries required.
+This library brings [tree-sitter](https://tree-sitter.github.io/tree-sitter/) parsing capabilities to Java by compiling tree-sitter and its language grammars to [WebAssembly](https://webassembly.org/) and running them through [Endive](https://github.com/bytecodealliance/endive), a pure-Java WASM runtime. No JNI or native binaries required.
 
 ## Modules
 
@@ -19,7 +19,7 @@ The Java module that provides the public API. It contains:
 
 ### `wasm-build`
 
-The Rust/WebAssembly module. It compiles tree-sitter core and the grammar crates listed in `Cargo.toml` into a single `tree-sitter.wasm` binary. The Makefile handles downloading WASI SDK and Binaryen, building, and optimizing the WASM output.
+The Rust/WebAssembly module. It compiles tree-sitter core and the grammar crates listed in `Cargo.toml` into a single `tree-sitter.wasm` binary. The Makefile handles downloading WASI SDK and Rust, building, and optimizing the WASM output.
 
 ## Supported languages
 
