@@ -12,9 +12,10 @@ treesitter4j is a Maven multi-modules project:
 
 The Java module that provides the public API. It contains:
 
-- `TreeSitter` -- factory for creating parser instances (manages the WASM module lifecycle via Chicory)
+- `TreeSitter` -- factory for creating parser instances (manages the WASM module lifecycle via Endive)
 - `TreeSitterParser` -- wraps a tree-sitter parser; set a language, parse a string, get a tree
 - `TreeSitterTree` / `TreeSitterNode` -- navigate the resulting AST (node types, children, S-expressions, byte ranges, ...)
+- `TreeSitterPool` -- thread-safe pool of `TreeSitter` instances for concurrent parsing
 - `Language` -- enum of available grammars (see below)
 
 ### `wasm-build`
@@ -52,6 +53,23 @@ try (TreeSitter ts = TreeSitter.create();
     }
 }
 ```
+
+## Thread-safe pooling
+
+Each `TreeSitter` instance owns an isolated WASM module with its own linear memory, so instances must not be shared across threads. `TreeSitterPool` caps the number of live instances and reuses them across parse operations. It uses only lock-free data structures and `Semaphore` internally (no `synchronized` blocks), so it is safe to use with virtual threads.
+
+```java
+try (TreeSitterPool pool = TreeSitterPool.create(4)) {
+    try (TreeSitterPool.Loan loan = pool.borrow()) {
+        try (TreeSitterParser parser = loan.instance().newParser(Language.JAVA);
+             TreeSitterTree tree = parser.parseString(source)) {
+            System.out.println(tree.rootNode().toSexp());
+        }
+    }
+}
+```
+
+If an error leaves the instance in a bad state, call `loan.discard()` before closing the loan to destroy it rather than returning it to the pool.
 
 ## Building
 
