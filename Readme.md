@@ -25,16 +25,16 @@ The Rust/WebAssembly module. It compiles tree-sitter core and the grammar crates
 
 The following tree-sitter grammars are compiled into the WASM module and exposed through the `Language` enum:
 
-| Language   | Crate                    | Version | Repository                                                                               |
-|------------|--------------------------|---------|------------------------------------------------------------------------------------------|
+| Language   | Crate                    | Version | Repository                                                                            |
+|------------|--------------------------|---------|---------------------------------------------------------------------------------------|
 | core       | `tree-sitter`            | 0.26.9  | [tree-sitter](https://docs.rs/tree-sitter/0.26.9/tree_sitter/                   |
-| JSON       | `tree-sitter-json`       | 0.24.8  | [tree-sitter-json](yeshttps://github.com/tree-sitter/tree-sitter-json)                   |
-| Java       | `tree-sitter-java`       | 0.23.5  | [tree-sitter-java](https://github.com/tree-sitter/tree-sitter-java)                      |
+| JSON       | `tree-sitter-json`       | 0.24.8  | [tree-sitter-json](https://github.com/tree-sitter/tree-sitter-json)                   |
+| Java       | `tree-sitter-java`       | 0.23.5  | [tree-sitter-java](https://github.com/tree-sitter/tree-sitter-java)                   |
 | Properties | `tree-sitter-properties` | 0.3.0   | [tree-sitter-properties](https://github.com/tree-sitter-grammars/tree-sitter-properties) |
-| HTML       | `tree-sitter-html`       | 0.23.2  | [tree-sitter-html](https://github.com/tree-sitter/tree-sitter-html)                      |
-| XML        | `tree-sitter-xml`        | 0.7.0   | [tree-sitter-xml](https://github.com/tree-sitter-grammars/tree-sitter-xml)               |
-| Markdown   | `tree-sitter-md`         | 0.5.3   | [tree-sitter-md](https://github.com/tree-sitter-grammars/tree-sitter-markdown)           |
-| YAML       | `tree-sitter-yaml`       | 0.7.2   | [tree-sitter-yaml](https://github.com/tree-sitter-grammars/tree-sitter-yaml)             |
+| HTML       | `tree-sitter-html`       | 0.23.2  | [tree-sitter-html](https://github.com/tree-sitter/tree-sitter-html)                   |
+| XML        | `tree-sitter-xml`        | 0.7.0   | [tree-sitter-xml](https://github.com/tree-sitter-grammars/tree-sitter-xml)            |
+| Markdown   | `tree-sitter-md`         | 0.5.3   | [tree-sitter-md](https://github.com/tree-sitter-grammars/tree-sitter-markdown)        |
+| YAML       | `tree-sitter-yaml`       | 0.7.2   | [tree-sitter-yaml](https://github.com/tree-sitter-grammars/tree-sitter-yaml)          |
 
 To add a new language, add the grammar crate to `wasm-build/Cargo.toml`, register it in `wasm-build/src/lib.rs` with a new ID, and add the corresponding entry to the `Language` enum in `core`.
 
