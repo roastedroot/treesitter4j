@@ -4,7 +4,7 @@
 
   <groupId>io.roastedroot</groupId>
   <artifactId>treesitter4j-parent</artifactId>
-  <version>0.0.2</version>
+  <version>999-SNAPSHOT</version>
   <packaging>pom</packaging>
 
   <name>treesitter4j-parent</name>
