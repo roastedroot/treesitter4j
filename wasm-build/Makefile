@@ -34,8 +34,6 @@ else
     ARCH := unknown
 endif
 
-WASI_SYSROOT := $(PWD)/wasi-sdk/share/wasi-sysroot
-
 # =========================================================================
 # RECIPES / TARGETS
 # =========================================================================
@@ -83,26 +81,25 @@ get-rust:
 	else \
 	   echo "✅ Rust/Cargo already installed: $$(cargo --version)"; \
 	fi
-	@if ! rustup target list --installed | grep -q wasm32-unknown-unknown; then \
-	   echo "Adding wasm32-unknown-unknown target..."; \
-	   rustup target add wasm32-unknown-unknown && \
-	   echo "✅ wasm32-unknown-unknown target added!"; \
+	@if ! rustup target list --installed | grep -q wasm32-wasip1; then \
+	   echo "Adding wasm32-wasip1 target..."; \
+	   rustup target add wasm32-wasip1 && \
+	   echo "✅ wasm32-wasip1 target added!"; \
 	else \
-	   echo "✅ wasm32-unknown-unknown target already installed"; \
+	   echo "✅ wasm32-wasip1 target already installed"; \
 	fi
 
 .PHONY: build
 build:
 	WASI_SDK_PATH=$(PWD)/wasi-sdk \
-	CC_wasm32_unknown_unknown=$(PWD)/wasi-sdk/bin/clang \
-	CFLAGS_wasm32_unknown_unknown="-isystem $(WASI_SYSROOT)/include/wasm32-wasip1 -Wno-incompatible-pointer-types -Wno-implicit-function-declaration" \
-	CARGO_TARGET_WASM32_UNKNOWN_UNKNOWN_RUSTFLAGS="-C link-arg=--allow-multiple-definition" \
-	cargo build --target wasm32-unknown-unknown --release
+	CC_wasm32_wasip1=$(PWD)/wasi-sdk/bin/clang \
+	AR_wasm32_wasip1=$(PWD)/wasi-sdk/bin/llvm-ar \
+	cargo build --target wasm32-wasip1 --release
 
 .PHONY: release
 release:
 	mkdir -p wasm
-	cp target/wasm32-unknown-unknown/release/tree_sitter_wasm.wasm wasm/$(PROJECT).wasm
+	cp target/wasm32-wasip1/release/tree_sitter_wasm.wasm wasm/$(PROJECT).wasm
 	@echo "Built wasm/$(PROJECT).wasm ($$(wc -c < wasm/$(PROJECT).wasm) bytes)"
 
 .PHONY: local
