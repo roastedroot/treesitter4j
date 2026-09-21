@@ -14,8 +14,16 @@ public final class TreeSitter implements AutoCloseable {
     private final TreeSitter_ModuleExports exports;
 
     private TreeSitter() {
+        // wasm32-wasip1 module: wasi-libc needs a few preview1 imports
+        WasiPreview1 wasi = WasiPreview1.builder()
+                .withOptions(WasiOptions.builder().build())
+                .build();
+        ImportValues imports = ImportValues.builder()
+                .addFunction(wasi.toHostFunctions())
+                .build();
         Instance instance = Instance.builder(TreeSitterModule.load())
                 .withMachineFactory(TreeSitterModule::create)
+                .withImportValues(imports)
                 .build();
 
         this.exports = new TreeSitter_ModuleExports(instance);
