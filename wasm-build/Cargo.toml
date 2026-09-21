@@ -24,3 +24,10 @@ lto = true
 codegen-units = 1
 strip = true
 panic = "abort"
+
+# tree-sitter-md 0.5.3's build.rs still compiles tree-sitter-language's removed
+# wasm libc shims (a #error since tree-sitter-language 0.1.8 / tree-sitter 0.27).
+# Fixed upstream in https://github.com/tree-sitter-grammars/tree-sitter-markdown/pull/261;
+# drop this patch once a tree-sitter-md release > 0.5.3 includes it.
+[patch.crates-io]
+tree-sitter-md = { git = "https://github.com/roastedroot/tree-sitter-markdown", rev = "d0d091b46f516fbca551026b64ae6e6cc81c696c" }

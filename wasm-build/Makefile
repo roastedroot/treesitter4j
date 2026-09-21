@@ -95,8 +95,7 @@ get-rust:
 build:
 	WASI_SDK_PATH=$(PWD)/wasi-sdk \
 	CC_wasm32_unknown_unknown=$(PWD)/wasi-sdk/bin/clang \
-	CFLAGS_wasm32_unknown_unknown="-isystem $(WASI_SYSROOT)/include/wasm32-wasip1 -Wno-incompatible-pointer-types -Wno-implicit-function-declaration" \
-	CARGO_TARGET_WASM32_UNKNOWN_UNKNOWN_RUSTFLAGS="-C link-arg=--allow-multiple-definition" \
+	CFLAGS_wasm32_unknown_unknown="-isystem $(WASI_SYSROOT)/include/wasm32-wasip1 -Wno-implicit-function-declaration" \
 	cargo build --target wasm32-unknown-unknown --release
 
 .PHONY: release

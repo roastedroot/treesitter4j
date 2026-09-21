@@ -3,89 +3,13 @@ use std::slice;
 use streaming_iterator::StreamingIterator;
 use tree_sitter::{Language, Node, Parser, Tree, Query, QueryCursor};
 
-// --- libc shims for wasm32-unknown-unknown ---
-
-const ALLOC_HEADER: usize = 8;
-
+// --- libc shim for wasm32-unknown-unknown ---
+// tree-sitter 0.27 provides malloc/free/str*/isw* itself, but some grammar
+// scanners are compiled against wasi-sysroot's <assert.h>, which expects an
+// extern __assert_fail. Trap on failure, like tree-sitter-language's assert.h.
 #[no_mangle]
-pub unsafe extern "C" fn malloc(size: usize) -> *mut u8 {
-    if size == 0 { return core::ptr::null_mut(); }
-    let total = ALLOC_HEADER + size;
-    let layout = std::alloc::Layout::from_size_align_unchecked(total, 8);
-    let ptr = std::alloc::alloc(layout);
-    if ptr.is_null() { return ptr; }
-    *(ptr as *mut usize) = size;
-    ptr.add(ALLOC_HEADER)
-}
-
-#[no_mangle]
-pub unsafe extern "C" fn free(ptr: *mut u8) {
-    if ptr.is_null() { return; }
-    let header = ptr.sub(ALLOC_HEADER);
-    let size = *(header as *const usize);
-    let layout = std::alloc::Layout::from_size_align_unchecked(ALLOC_HEADER + size, 8);
-    std::alloc::dealloc(header, layout);
-}
-
-#[no_mangle]
-pub unsafe extern "C" fn calloc(count: usize, size: usize) -> *mut u8 {
-    let total = count * size;
-    let ptr = malloc(total);
-    if !ptr.is_null() { core::ptr::write_bytes(ptr, 0, total); }
-    ptr
-}
-
-#[no_mangle]
-pub unsafe extern "C" fn realloc(ptr: *mut u8, new_size: usize) -> *mut u8 {
-    if ptr.is_null() { return malloc(new_size); }
-    if new_size == 0 { free(ptr); return core::ptr::null_mut(); }
-    let header = ptr.sub(ALLOC_HEADER);
-    let old_size = *(header as *const usize);
-    let old_layout = std::alloc::Layout::from_size_align_unchecked(ALLOC_HEADER + old_size, 8);
-    let new_header = std::alloc::realloc(header, old_layout, ALLOC_HEADER + new_size);
-    if new_header.is_null() { return new_header; }
-    *(new_header as *mut usize) = new_size;
-    new_header.add(ALLOC_HEADER)
-}
-
-#[no_mangle]
-pub unsafe extern "C" fn strcmp(s1: *const u8, s2: *const u8) -> i32 {
-    let mut a = s1;
-    let mut b = s2;
-    loop {
-        let ca = *a;
-        let cb = *b;
-        if ca != cb || ca == 0 {
-            return ca as i32 - cb as i32;
-        }
-        a = a.add(1);
-        b = b.add(1);
-    }
-}
-
-#[no_mangle]
-pub extern "C" fn towlower(c: u32) -> u32 {
-    if c >= 'A' as u32 && c <= 'Z' as u32 { c + 32 } else { c }
-}
-
-#[no_mangle]
-pub extern "C" fn towupper(c: u32) -> u32 {
-    if c >= 'a' as u32 && c <= 'z' as u32 { c - 32 } else { c }
-}
-
-#[no_mangle]
-pub extern "C" fn iswalpha(c: u32) -> i32 {
-    if (c >= 'A' as u32 && c <= 'Z' as u32) || (c >= 'a' as u32 && c <= 'z' as u32) { 1 } else { 0 }
-}
-
-#[no_mangle]
-pub extern "C" fn iswalnum(c: u32) -> i32 {
-    if iswalpha(c) != 0 || (c >= '0' as u32 && c <= '9' as u32) { 1 } else { 0 }
-}
-
-#[no_mangle]
-pub extern "C" fn iswspace(c: u32) -> i32 {
-    if c == ' ' as u32 || c == '\t' as u32 || c == '\n' as u32 || c == '\r' as u32 || c == 0x0b || c == 0x0c { 1 } else { 0 }
+pub extern "C" fn __assert_fail(_expr: *const u8, _file: *const u8, _line: i32, _func: *const u8) -> ! {
+    core::arch::wasm32::unreachable()
 }
 
 // --- Global state (wasm is single-threaded) ---
@@ -533,7 +457,7 @@ pub extern "C" fn query_cursor_exec(
         let mut local_captures = Vec::new();
         let mut matches = state.cursor.matches(&*query, node, source);
         while let Some(m) = matches.next() {
-            for capture in m.captures {
+            for capture in m.captures() {
                 let nh = store_node(capture.node);
                 local_captures.push((nh, capture.index));
             }
