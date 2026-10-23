@@ -4,6 +4,8 @@ tree-sitter API for Java using WebAssembly.
 
 This library brings [tree-sitter](https://tree-sitter.github.io/tree-sitter/) parsing capabilities to Java by compiling tree-sitter and its language grammars to [WebAssembly](https://webassembly.org/) and running them through [Endive](https://github.com/bytecodealliance/endive), a pure-Java WASM runtime. No JNI or native binaries required.
 
+**Note**: Starting from release 0.1.x, this project uses Jackson 3 for JSON serialization and requires JDK 17 or later.
+
 ## Modules
 
 treesitter4j is a Maven multi-modules project:
@@ -28,7 +30,7 @@ The following tree-sitter grammars are compiled into the WASM module and exposed
 
 | Language   | Crate                    | Version | Repository                                                                            |
 |------------|--------------------------|---------|---------------------------------------------------------------------------------------|
-| core       | `tree-sitter`            | 0.26.9  | [tree-sitter](https://docs.rs/tree-sitter/0.26.9/tree_sitter/                   |
+| core       | `tree-sitter`            | 0.27.1  | [tree-sitter](https://docs.rs/tree-sitter/0.27.1/tree_sitter/                   |
 | JSON       | `tree-sitter-json`       | 0.24.8  | [tree-sitter-json](https://github.com/tree-sitter/tree-sitter-json)                   |
 | Java       | `tree-sitter-java`       | 0.23.5  | [tree-sitter-java](https://github.com/tree-sitter/tree-sitter-java)                   |
 | Properties | `tree-sitter-properties` | 0.3.0   | [tree-sitter-properties](https://github.com/tree-sitter-grammars/tree-sitter-properties) |
