@@ -1,7 +1,8 @@
 package io.roastedroot.treesitter.ast;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.SerializationFeature;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -9,8 +10,9 @@ import java.nio.file.Path;
 public class ASTJsonSerializer {
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
-    private static final ObjectMapper PRETTY_MAPPER = new ObjectMapper()
-            .enable(SerializationFeature.INDENT_OUTPUT);
+    private static final ObjectMapper PRETTY_MAPPER = JsonMapper.builder()
+            .enable(SerializationFeature.INDENT_OUTPUT)
+            .build();
 
     public static String toJson(ASTTree tree) throws IOException {
         return MAPPER.writeValueAsString(tree);
