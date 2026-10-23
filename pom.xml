@@ -102,9 +102,7 @@
             <artifactId>maven-javadoc-plugin</artifactId>
             <version>${maven-javadoc-plugin.version}</version>
             <configuration>
-              <sourcepath>src/main/java</sourcepath>
-              <additionalOptions>-Xdoclint:none</additionalOptions>
-              <additionalOptions>--ignore-source-errors</additionalOptions>
+              <additionalOptions>-Xdoclint:none --ignore-source-errors</additionalOptions>
               <additionalJOption>-Xdoclint:none</additionalJOption>
             </configuration>
             <executions>

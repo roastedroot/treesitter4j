@@ -87,7 +87,7 @@
                         </goals>
                         <configuration>
                             <sources>
-                                <source>${project.build.directory}/generated-sources/endive</source>
+                                <source>${project.build.directory}/generated-sources/endive-compiler</source>
                             </sources>
                         </configuration>
                     </execution>
