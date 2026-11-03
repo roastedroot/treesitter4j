@@ -15,7 +15,7 @@ tree-sitter-java = "0.23.5"
 tree-sitter-properties = "0.3.0"
 tree-sitter-html = "0.23.2"
 tree-sitter-xml = "0.7.0"
-tree-sitter-md = "0.5.3"
+tree-sitter-md = "0.5.4"
 tree-sitter-yaml = "0.7.2"
 
 [profile.release]
